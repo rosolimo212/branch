@@ -21,6 +21,12 @@ if not DOOR_PATH:
 if not DOOR_PATH.startswith("/"):
     DOOR_PATH = "/" + DOOR_PATH
 
+SIGNUP_PATH = os.getenv("SIGNUP_PATH", "").strip()
+if not SIGNUP_PATH:
+    raise RuntimeError("Set SIGNUP_PATH env var to a long, unguessable path segment.")
+if not SIGNUP_PATH.startswith("/"):
+    SIGNUP_PATH = "/" + SIGNUP_PATH
+
 MAX_MESSAGE_LEN = int(os.getenv("MAX_MESSAGE_LEN", "2000"))
 MAX_TOPIC_TITLE = int(os.getenv("MAX_TOPIC_TITLE", "80"))
 
@@ -88,6 +94,29 @@ async def login_submit(request: web.Request) -> web.Response:
         samesite="Strict",
         path="/",
     )
+    raise resp
+
+
+async def signup_form(request: web.Request) -> web.Response:
+    return render("signup.html", error=None)
+
+
+async def signup_submit(request: web.Request) -> web.Response:
+    data = await request.post()
+    username = (data.get("username") or "").strip()
+    password = data.get("password") or ""
+    confirm = data.get("confirm") or ""
+    if not username or not password:
+        return render("signup.html", error="Missing credentials.")
+    if password != confirm:
+        return render("signup.html", error="Passwords do not match.")
+    if len(username) > 32:
+        return render("signup.html", error="Username too long.")
+    exists = await db_call(storage.user_exists, username)
+    if exists:
+        return render("signup.html", error="Username already exists.")
+    await db_call(storage.create_user, username, password)
+    resp = web.HTTPFound(DOOR_PATH)
     raise resp
 
 
@@ -238,7 +267,9 @@ def create_app() -> web.Application:
     app.router.add_get("/", index)
     app.router.add_get("/robots.txt", robots)
     app.router.add_get(DOOR_PATH, login_form)
+    app.router.add_get(SIGNUP_PATH, signup_form)
     app.router.add_post("/login", login_submit)
+    app.router.add_post("/signup", signup_submit)
     app.router.add_get("/logout", logout)
     app.router.add_get("/lobby", lobby)
     app.router.add_post("/topic/create", create_topic)

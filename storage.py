@@ -98,6 +98,16 @@ def create_user(username: str, password: str) -> None:
     conn.close()
 
 
+def user_exists(username: str) -> bool:
+    conn = _connect()
+    row = conn.execute(
+        "SELECT 1 FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()
+    conn.close()
+    return row is not None
+
+
 def verify_user(username: str, password: str) -> Optional[sqlite3.Row]:
     conn = _connect()
     row = conn.execute(
