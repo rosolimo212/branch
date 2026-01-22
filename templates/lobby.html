@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="header">
+    <div class="title">Lobby</div>
+    <div class="user">Logged in as {{ user.username }}</div>
+    <a class="link" href="/logout">Logout</a>
+  </div>
+
+  <div class="panel">
+    <form method="post" action="/topic/create" class="form-inline">
+      <input name="title" placeholder="New topic title" maxlength="80" required>
+      <button type="submit">Create</button>
+    </form>
+  </div>
+
+  <div class="topics">
+    {% if topics %}
+      {% for topic in topics %}
+        <a class="topic" href="/topic/{{ topic.id }}">
+          <div class="topic-title">{{ topic.title }}</div>
+          <div class="topic-meta">by {{ topic.author }} · {{ topic.created_at }}</div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="empty">No topics yet.</div>
+    {% endif %}
+  </div>
+{% endblock %}

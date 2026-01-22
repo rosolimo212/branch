@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="header">
+    <div class="title">{{ topic.title }}</div>
+    <a class="link" href="/lobby">Back</a>
+  </div>
+
+  <div class="thread-controls">
+    <div class="reply-indicator" id="reply-indicator">Replying to: none</div>
+    <button class="link-button" id="clear-reply">Clear reply</button>
+  </div>
+
+  <div id="thread" class="thread"></div>
+
+  <div class="composer">
+    <textarea id="message-input" placeholder="Write a message..."></textarea>
+    <button id="send-message">Send</button>
+  </div>
+
+  <script>
+    const initialMessages = {{ messages_json | safe }};
+    const currentUser = {{ user_json | safe }};
+    const topicId = {{ topic.id }};
+  </script>
+  <script src="/static/topic.js"></script>
+{% endblock %}

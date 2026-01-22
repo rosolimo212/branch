@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="panel">
+    <div class="panel-title">Authorized Access</div>
+    {% if error %}
+      <div class="error-text">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/login" class="form">
+      <label>
+        <span>Username</span>
+        <input name="username" autocomplete="username" required>
+      </label>
+      <label>
+        <span>Password</span>
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Enter</button>
+    </form>
+    <div class="form-note">No recovery. Keep your password safe.</div>
+  </div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="error-box">
+    <div class="error-code">404</div>
+    <div class="error-title">System Error</div>
+    <div class="error-lines">
+      <div>fatal: missing dependency</div>
+      <div>trace: /dev/null:0</div>
+      <div>status: degraded</div>
+      <div>retry: disabled</div>
+    </div>
+    <div class="scene">
+      <img src="/static/window.svg" alt="window">
+      <img src="/static/fireplace.svg" alt="fireplace">
+    </div>
+    <a class="door" href="{{ door_url }}" aria-label="door">
+      <img src="/static/door.svg" alt="door">
+    </a>
+  </div>
+{% endblock %}
