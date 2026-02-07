@@ -21,7 +21,7 @@
       {% for topic in topics %}
         <a class="topic" href="/topic/{{ topic.id }}" data-topic-id="{{ topic.id }}" data-last-activity="{{ topic.last_activity_at }}">
           <div class="topic-title">{{ topic.title }}</div>
-          <div class="topic-meta">by {{ topic.author }} · {{ topic.created_at }}</div>
+          <div class="topic-meta">last by {{ topic.last_author }} · {{ topic.created_at }}</div>
         </a>
       {% endfor %}
     {% else %}

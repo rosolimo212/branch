@@ -90,7 +90,6 @@
       panel.classList.toggle("open");
     };
     button.addEventListener("click", toggle);
-    button.addEventListener("touchstart", toggle, { passive: false });
     button.addEventListener("pointerup", toggle);
     panel.addEventListener("click", (event) => event.stopPropagation());
     document.addEventListener("click", (event) => {

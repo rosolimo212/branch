@@ -183,11 +183,18 @@ def list_topics() -> list[sqlite3.Row]:
                t.title,
                t.created_at,
                u.username as author,
-               COALESCE(MAX(m.created_at), t.created_at) as last_activity_at
+               COALESCE(mu.username, u.username) as last_author,
+               COALESCE(m.created_at, t.created_at) as last_activity_at
         FROM topics t
         JOIN users u ON u.id = t.created_by
-        LEFT JOIN messages m ON m.topic_id = t.id
-        GROUP BY t.id
+        LEFT JOIN messages m ON m.id = (
+            SELECT id
+            FROM messages
+            WHERE topic_id = t.id
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+        )
+        LEFT JOIN users mu ON mu.id = m.user_id
         ORDER BY last_activity_at DESC
         """
     ).fetchall()
