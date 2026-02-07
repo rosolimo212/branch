@@ -84,6 +84,7 @@
   function attachEmojiPicker(button, textarea, panel) {
     if (!button || !panel) return;
     fillEmojiPanel(panel, textarea);
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     const toggle = (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -91,12 +92,15 @@
     };
     button.addEventListener("click", toggle);
     button.addEventListener("pointerup", toggle);
+    button.addEventListener("touchend", toggle, { passive: false });
     panel.addEventListener("click", (event) => event.stopPropagation());
-    document.addEventListener("click", (event) => {
-      if (!panel.contains(event.target) && event.target !== button) {
-        panel.classList.remove("open");
-      }
-    });
+    if (!isTouch) {
+      document.addEventListener("click", (event) => {
+        if (!panel.contains(event.target) && event.target !== button) {
+          panel.classList.remove("open");
+        }
+      });
+    }
   }
 
   function renderBody(text) {
