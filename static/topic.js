@@ -84,9 +84,15 @@
   function attachEmojiPicker(button, textarea, panel) {
     if (!button || !panel) return;
     fillEmojiPanel(panel, textarea);
-    button.addEventListener("click", () => {
+    const toggle = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       panel.classList.toggle("open");
-    });
+    };
+    button.addEventListener("click", toggle);
+    button.addEventListener("touchstart", toggle, { passive: false });
+    button.addEventListener("pointerup", toggle);
+    panel.addEventListener("click", (event) => event.stopPropagation());
     document.addEventListener("click", (event) => {
       if (!panel.contains(event.target) && event.target !== button) {
         panel.classList.remove("open");
