@@ -35,6 +35,7 @@ Initialize DB and create a user:
 ```bash
 python manage.py init-db
 python manage.py create-user alice
+python manage.py create-admin admin
 ```
 
 Run the server:

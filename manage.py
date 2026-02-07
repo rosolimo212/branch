@@ -14,6 +14,9 @@ def main() -> int:
 
     sub.add_parser("init-db", help="Initialize the database")
 
+    create_admin = sub.add_parser("create-admin", help="Create a new admin user")
+    create_admin.add_argument("username")
+
     args = parser.parse_args()
 
     if args.command == "init-db":
@@ -30,6 +33,18 @@ def main() -> int:
             return 1
         storage.create_user(args.username, password)
         print("User created.")
+        return 0
+
+    if args.command == "create-admin":
+        storage.init_db()
+        password = getpass.getpass("Password: ")
+        confirm = getpass.getpass("Confirm: ")
+        if password != confirm:
+            print("Passwords do not match.", file=sys.stderr)
+            return 1
+        storage.create_user(args.username, password)
+        print("Admin user created.")
+        print("Remember to add this username to ADMIN_USERS in /etc/branch.env.")
         return 0
 
     return 0
