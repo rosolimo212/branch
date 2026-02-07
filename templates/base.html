@@ -9,7 +9,23 @@
   </head>
   <body>
     <div class="page">
-      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="toggle theme">Theme</button>
+      <div class="topbar">
+        <div class="topbar-row">
+          {% if user %}
+            <a class="link" href="/logout">Logout</a>
+            <a class="link" href="/">Main</a>
+          {% endif %}
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="toggle theme">Theme</button>
+        </div>
+        {% if user and is_admin %}
+          <div class="topbar-row">
+            <a class="link" href="/admin">Admin</a>
+          </div>
+        {% endif %}
+        {% if user %}
+          <div class="topbar-meta">Logged in as {{ user.username }}</div>
+        {% endif %}
+      </div>
       {% block content %}{% endblock %}
     </div>
     <script src="/static/theme.js"></script>

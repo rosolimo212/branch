@@ -67,7 +67,7 @@ def is_admin(user: Optional[dict[str, Any]]) -> bool:
 
 
 async def index(request: web.Request) -> web.Response:
-    return render("index.html", door_url=DOOR_PATH)
+    return render("index.html", door_url=DOOR_PATH, user=None, is_admin=False)
 
 
 async def robots(request: web.Request) -> web.Response:
@@ -77,7 +77,7 @@ async def robots(request: web.Request) -> web.Response:
 
 
 async def login_form(request: web.Request) -> web.Response:
-    return render("login.html", error=None)
+    return render("login.html", error=None, user=None, is_admin=False)
 
 
 async def login_submit(request: web.Request) -> web.Response:
@@ -85,10 +85,10 @@ async def login_submit(request: web.Request) -> web.Response:
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
     if not username or not password:
-        return render("login.html", error="Missing credentials.")
+        return render("login.html", error="Missing credentials.", user=None, is_admin=False)
     user = await db_call(storage.verify_user, username, password)
     if not user:
-        return render("login.html", error="Wrong username or password.")
+        return render("login.html", error="Wrong username or password.", user=None, is_admin=False)
     token = await db_call(storage.create_session, user["id"])
     resp = web.HTTPFound("/lobby")
     resp.set_cookie(
@@ -108,7 +108,7 @@ async def invite_form(request: web.Request) -> web.Response:
     invite = await db_call(storage.get_invite, token)
     if not invite or invite["used_at"] is not None:
         raise web.HTTPNotFound()
-    return render("signup.html", error=None)
+    return render("signup.html", error=None, user=None, is_admin=False)
 
 
 async def invite_submit(request: web.Request) -> web.Response:
@@ -118,14 +118,14 @@ async def invite_submit(request: web.Request) -> web.Response:
     password = data.get("password") or ""
     confirm = data.get("confirm") or ""
     if not username or not password:
-        return render("signup.html", error="Missing credentials.")
+        return render("signup.html", error="Missing credentials.", user=None, is_admin=False)
     if password != confirm:
-        return render("signup.html", error="Passwords do not match.")
+        return render("signup.html", error="Passwords do not match.", user=None, is_admin=False)
     if len(username) > 32:
-        return render("signup.html", error="Username too long.")
+        return render("signup.html", error="Username too long.", user=None, is_admin=False)
     user_id = await db_call(storage.create_user_with_invite, token, username, password)
     if not user_id:
-        return render("signup.html", error="Invite is invalid or username taken.")
+        return render("signup.html", error="Invite is invalid or username taken.", user=None, is_admin=False)
     resp = web.HTTPFound(DOOR_PATH)
     raise resp
 
@@ -134,7 +134,7 @@ async def admin_invite_page(request: web.Request) -> web.Response:
     user = await get_user(request)
     if not is_admin(user):
         raise web.HTTPNotFound()
-    return render("admin.html", user=user)
+    return render("admin.html", user=user, is_admin=True)
 
 
 async def admin_create_invite(request: web.Request) -> web.Response:
@@ -143,7 +143,7 @@ async def admin_create_invite(request: web.Request) -> web.Response:
         raise web.HTTPNotFound()
     token = await db_call(storage.create_invite)
     link = f"{request.scheme}://{request.host}/invite/{token}"
-    return render("invite.html", link=link, user=user)
+    return render("invite.html", link=link, user=user, is_admin=True)
 
 
 async def logout(request: web.Request) -> web.Response:
@@ -192,6 +192,8 @@ async def topic_page(request: web.Request) -> web.Response:
         topic=topic,
         messages_json=messages_json,
         user_json=user_json,
+        user=user,
+        is_admin=is_admin(user),
     )
 
 
@@ -282,7 +284,7 @@ async def broadcast(topic_id: int, payload: dict[str, Any]) -> None:
 
 
 async def not_found(request: web.Request) -> web.Response:
-    resp = render("not_found.html")
+    resp = render("not_found.html", user=None, is_admin=False)
     resp.set_status(404)
     return resp
 
