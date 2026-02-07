@@ -6,6 +6,7 @@
   const replyIndicator = document.getElementById("reply-indicator");
   const clearReply = document.getElementById("clear-reply");
   const emojiButton = document.getElementById("emoji-button");
+  const emojiPanel = document.getElementById("emoji-panel");
 
   const storageKey = "branch.lastSeen";
   let messages = new Map();
@@ -14,7 +15,7 @@
   let lastSeen = {};
   let lastSeenAt = null;
 
-  const emojis = ["😀", "😂", "😊", "😉", "😍", "🤔", "😎", "😢", "😡", "👍", "👎", "🔥", "🎯", "✅", "❗", "❓", "❤️", "💬", "🙏", "🤝"];
+  const emojis = ["😀", "😂", "😊", "😉", "😍", "🤔", "😢", "😡", "👍", "👎", "❤️", "🔥"];
 
   const raw = localStorage.getItem(storageKey);
   if (raw) {
@@ -67,11 +68,9 @@
     textarea.focus();
   }
 
-  function attachEmojiPicker(button, textarea) {
-    if (!button) return;
-    const panel = document.createElement("div");
-    panel.className = "emoji-panel";
-    panel.dataset.open = "false";
+  function fillEmojiPanel(panel, textarea) {
+    if (!panel) return;
+    panel.innerHTML = "";
     emojis.forEach((emoji) => {
       const item = document.createElement("button");
       item.type = "button";
@@ -80,13 +79,17 @@
       item.addEventListener("click", () => insertAtCursor(textarea, emoji));
       panel.appendChild(item);
     });
-    button.parentElement.appendChild(panel);
+  }
+
+  function attachEmojiPicker(button, textarea, panel) {
+    if (!button || !panel) return;
+    fillEmojiPanel(panel, textarea);
     button.addEventListener("click", () => {
-      panel.dataset.open = panel.dataset.open === "true" ? "false" : "true";
+      panel.classList.toggle("open");
     });
     document.addEventListener("click", (event) => {
       if (!panel.contains(event.target) && event.target !== button) {
-        panel.dataset.open = "false";
+        panel.classList.remove("open");
       }
     });
   }
@@ -278,6 +281,9 @@
     emoji.type = "button";
     emoji.textContent = "Emoji";
     actions.appendChild(emoji);
+    const panel = document.createElement("div");
+    panel.className = "emoji-panel";
+    actions.appendChild(panel);
 
     const send = document.createElement("button");
     send.textContent = "Send";
@@ -296,7 +302,7 @@
     actions.appendChild(cancel);
 
     box.appendChild(actions);
-    attachEmojiPicker(emoji, area);
+    attachEmojiPicker(emoji, area, panel);
     area.focus();
     area.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
@@ -355,7 +361,7 @@
     ws.send(JSON.stringify({ type: "react", message_id: messageId, value }));
   }
 
-  attachEmojiPicker(emojiButton, inputEl);
+  attachEmojiPicker(emojiButton, inputEl, emojiPanel);
 
   sendBtn.addEventListener("click", sendMessage);
   inputEl.addEventListener("keydown", (event) => {
