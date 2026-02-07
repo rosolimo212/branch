@@ -126,6 +126,12 @@ button {
   gap: 12px;
 }
 
+.left-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
 .title {
   font-size: 20px;
   flex: 1;
@@ -152,6 +158,11 @@ button {
   background: #11161b;
 }
 
+.topic.unread {
+  border-color: #5c6fa6;
+  background: #151b24;
+}
+
 .topic-title {
   font-size: 16px;
 }
@@ -168,7 +179,7 @@ button {
 
 .thread-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   font-size: 12px;
 }
@@ -199,10 +210,35 @@ button {
   color: #7a8a9b;
 }
 
+.message-author {
+  font-size: 14px;
+  color: #c8d0d8;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.message-meta {
+  color: #7a8a9b;
+}
+
 .message-body {
   margin-top: 6px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.message.unread {
+  border-left-color: #5c6fa6;
+  background: rgba(92, 111, 166, 0.08);
+}
+
+.mention {
+  color: #9db7ff;
+}
+
+.mention-you {
+  color: #ffd28a;
+  font-weight: 600;
 }
 
 .reply-editor {
@@ -246,6 +282,12 @@ button {
   gap: 8px;
 }
 
+.composer-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .editor {
   margin-top: 8px;
 }
@@ -259,6 +301,30 @@ button {
   margin-top: 6px;
   display: flex;
   gap: 8px;
+}
+
+.emoji-panel {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.emoji-panel[data-open="true"] {
+  display: flex;
+}
+
+.emoji-item {
+  padding: 6px 8px;
+  border: 1px solid #2d3742;
+  background: #0c0f12;
+  cursor: pointer;
+}
+
+.invite-link {
+  word-break: break-all;
+  color: #9db7ff;
+  margin-top: 6px;
 }
 
 .form-inline {

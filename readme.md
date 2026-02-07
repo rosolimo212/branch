@@ -27,6 +27,7 @@ print(secrets.token_urlsafe(18))
 PY
 )"
 export PORT=8080
+export ADMIN_USERS="alice"
 ```
 
 Initialize DB and create a user:
@@ -46,9 +47,11 @@ Open:
 - `http://localhost:8080/` (landing page)
 - `http://localhost:8080/$DOOR_PATH` (login)
 - after login: `/lobby`
+- admin page: `/admin` (only for usernames in `ADMIN_USERS`)
 
 ## Notes
 
 - Login URL is unlisted but not truly secret; treat it like a private invite.
+- One-time invite links are generated in `/admin`.
 - No password recovery is implemented.
 - Session persists for ~1 year unless you logout.

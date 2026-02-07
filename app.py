@@ -21,11 +21,11 @@ if not DOOR_PATH:
 if not DOOR_PATH.startswith("/"):
     DOOR_PATH = "/" + DOOR_PATH
 
-SIGNUP_PATH = os.getenv("SIGNUP_PATH", "").strip()
-if not SIGNUP_PATH:
-    raise RuntimeError("Set SIGNUP_PATH env var to a long, unguessable path segment.")
-if not SIGNUP_PATH.startswith("/"):
-    SIGNUP_PATH = "/" + SIGNUP_PATH
+ADMIN_USERS = {
+    name.strip()
+    for name in os.getenv("ADMIN_USERS", "").split(",")
+    if name.strip()
+}
 
 MAX_MESSAGE_LEN = int(os.getenv("MAX_MESSAGE_LEN", "2000"))
 MAX_TOPIC_TITLE = int(os.getenv("MAX_TOPIC_TITLE", "80"))
@@ -58,6 +58,12 @@ async def get_user(request: web.Request) -> Optional[dict[str, Any]]:
     if not row:
         return None
     return {"id": row["id"], "username": row["username"]}
+
+
+def is_admin(user: Optional[dict[str, Any]]) -> bool:
+    if not user:
+        return False
+    return user["username"] in ADMIN_USERS
 
 
 async def index(request: web.Request) -> web.Response:
@@ -97,11 +103,16 @@ async def login_submit(request: web.Request) -> web.Response:
     raise resp
 
 
-async def signup_form(request: web.Request) -> web.Response:
+async def invite_form(request: web.Request) -> web.Response:
+    token = request.match_info["token"]
+    invite = await db_call(storage.get_invite, token)
+    if not invite or invite["used_at"] is not None:
+        raise web.HTTPNotFound()
     return render("signup.html", error=None)
 
 
-async def signup_submit(request: web.Request) -> web.Response:
+async def invite_submit(request: web.Request) -> web.Response:
+    token = request.match_info["token"]
     data = await request.post()
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
@@ -112,12 +123,27 @@ async def signup_submit(request: web.Request) -> web.Response:
         return render("signup.html", error="Passwords do not match.")
     if len(username) > 32:
         return render("signup.html", error="Username too long.")
-    exists = await db_call(storage.user_exists, username)
-    if exists:
-        return render("signup.html", error="Username already exists.")
-    await db_call(storage.create_user, username, password)
+    user_id = await db_call(storage.create_user_with_invite, token, username, password)
+    if not user_id:
+        return render("signup.html", error="Invite is invalid or username taken.")
     resp = web.HTTPFound(DOOR_PATH)
     raise resp
+
+
+async def admin_invite_page(request: web.Request) -> web.Response:
+    user = await get_user(request)
+    if not is_admin(user):
+        raise web.HTTPNotFound()
+    return render("admin.html", user=user)
+
+
+async def admin_create_invite(request: web.Request) -> web.Response:
+    user = await get_user(request)
+    if not is_admin(user):
+        raise web.HTTPNotFound()
+    token = await db_call(storage.create_invite)
+    link = f"{request.scheme}://{request.host}/invite/{token}"
+    return render("invite.html", link=link, user=user)
 
 
 async def logout(request: web.Request) -> web.Response:
@@ -134,7 +160,7 @@ async def lobby(request: web.Request) -> web.Response:
     if not user:
         raise web.HTTPNotFound()
     topics = await db_call(storage.list_topics)
-    return render("lobby.html", topics=topics, user=user)
+    return render("lobby.html", topics=topics, user=user, is_admin=is_admin(user))
 
 
 async def create_topic(request: web.Request) -> web.Response:
@@ -267,9 +293,11 @@ def create_app() -> web.Application:
     app.router.add_get("/", index)
     app.router.add_get("/robots.txt", robots)
     app.router.add_get(DOOR_PATH, login_form)
-    app.router.add_get(SIGNUP_PATH, signup_form)
+    app.router.add_get("/invite/{token}", invite_form)
     app.router.add_post("/login", login_submit)
-    app.router.add_post("/signup", signup_submit)
+    app.router.add_post("/invite/{token}", invite_submit)
+    app.router.add_get("/admin", admin_invite_page)
+    app.router.add_post("/admin/invite", admin_create_invite)
     app.router.add_get("/logout", logout)
     app.router.add_get("/lobby", lobby)
     app.router.add_post("/topic/create", create_topic)

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="header">
+    <a class="link" href="/lobby">Back</a>
+    <div class="title">Invite link</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">One-time link</div>
+    <div class="invite-link">{{ link }}</div>
+    <div class="form-note">The link works only once.</div>
+  </div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="header">
+    <a class="link" href="/lobby">Back</a>
+    <div class="title">Admin</div>
+    <div class="user">Logged in as {{ user.username }}</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">One-time invite link</div>
+    <form method="post" action="/admin/invite">
+      <button type="submit">Generate link</button>
+    </form>
+  </div>
+{% endblock %}

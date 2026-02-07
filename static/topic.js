@@ -5,29 +5,109 @@
   const sendBtn = document.getElementById("send-message");
   const replyIndicator = document.getElementById("reply-indicator");
   const clearReply = document.getElementById("clear-reply");
+  const emojiButton = document.getElementById("emoji-button");
 
+  const storageKey = "branch.lastSeen";
   let messages = new Map();
   let replyTo = null;
   let openReplyId = null;
+  let lastSeen = {};
+  let lastSeenAt = null;
+
+  const emojis = ["😀", "😂", "😊", "😉", "😍", "🤔", "😎", "😢", "😡", "👍", "👎", "🔥", "🎯", "✅", "❗", "❓", "❤️", "💬", "🙏", "🤝"];
+
+  const raw = localStorage.getItem(storageKey);
+  if (raw) {
+    try {
+      lastSeen = JSON.parse(raw);
+    } catch {
+      lastSeen = {};
+    }
+  }
+  lastSeenAt = lastSeen[topicId] || null;
+
+  function saveLastSeen(isoTime) {
+    if (!isoTime) return;
+    lastSeenAt = isoTime;
+    lastSeen[topicId] = isoTime;
+    localStorage.setItem(storageKey, JSON.stringify(lastSeen));
+  }
+
+  function latestMessageTime() {
+    let latest = null;
+    messages.forEach((msg) => {
+      if (!latest || new Date(msg.created_at) > new Date(latest)) {
+        latest = msg.created_at;
+      }
+    });
+    return latest;
+  }
+
+  function isAtBottom() {
+    return window.innerHeight + window.scrollY >= document.body.offsetHeight - 40;
+  }
+
+  function scrollToBottom() {
+    window.scrollTo(0, document.body.scrollHeight);
+  }
 
   function setReply(targetId) {
     replyTo = targetId;
     replyIndicator.textContent = targetId ? `Replying to: #${targetId}` : "Replying to: none";
   }
 
-  clearReply.addEventListener("click", () => setReply(null));
+  clearReply.addEventListener("click", () => closeReplyEditors());
 
-  function linkify(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
+  function insertAtCursor(textarea, text) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    textarea.value = value.slice(0, start) + text + value.slice(end);
+    textarea.selectionStart = textarea.selectionEnd = start + text.length;
+    textarea.focus();
+  }
+
+  function attachEmojiPicker(button, textarea) {
+    if (!button) return;
+    const panel = document.createElement("div");
+    panel.className = "emoji-panel";
+    panel.dataset.open = "false";
+    emojis.forEach((emoji) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "emoji-item";
+      item.textContent = emoji;
+      item.addEventListener("click", () => insertAtCursor(textarea, emoji));
+      panel.appendChild(item);
+    });
+    button.parentElement.appendChild(panel);
+    button.addEventListener("click", () => {
+      panel.dataset.open = panel.dataset.open === "true" ? "false" : "true";
+    });
+  }
+
+  function renderBody(text) {
+    const regex = /(https?:\/\/[^\s]+)|(@[A-Za-z0-9_]{1,32})/g;
+    const parts = text.split(regex);
     return parts.map((part) => {
-      if (part.match(urlRegex)) {
+      if (!part) return document.createTextNode("");
+      if (part.match(/^https?:\/\//)) {
         const a = document.createElement("a");
         a.href = part;
         a.textContent = part;
         a.target = "_blank";
         a.rel = "noopener";
         return a;
+      }
+      if (part.startsWith("@")) {
+        const name = part.slice(1);
+        const span = document.createElement("span");
+        span.className = "mention";
+        if (name === currentUser.username) {
+          span.classList.add("mention-you");
+        }
+        span.textContent = part;
+        return span;
       }
       return document.createTextNode(part);
     });
@@ -49,19 +129,38 @@
     return roots;
   }
 
+  function isUnread(node) {
+    if (!lastSeenAt) return false;
+    if (node.username === currentUser.username) return false;
+    return new Date(node.created_at) > new Date(lastSeenAt);
+  }
+
   function renderMessage(node) {
     const wrapper = document.createElement("div");
     wrapper.className = "message";
     wrapper.dataset.id = node.id;
+    if (isUnread(node)) {
+      wrapper.classList.add("unread");
+    }
 
     const header = document.createElement("div");
     header.className = "message-header";
-    header.textContent = `${node.username} · ${node.created_at} · #${node.id}`;
+
+    const author = document.createElement("span");
+    author.className = "message-author";
+    author.textContent = node.username;
+    author.addEventListener("click", () => insertAtCursor(inputEl, `@${node.username} `));
+    header.appendChild(author);
+
+    const meta = document.createElement("span");
+    meta.className = "message-meta";
+    meta.textContent = `· ${node.created_at} · #${node.id}`;
+    header.appendChild(meta);
     wrapper.appendChild(header);
 
     const body = document.createElement("div");
     body.className = "message-body";
-    linkify(node.body).forEach((part) => body.appendChild(part));
+    renderBody(node.body).forEach((part) => body.appendChild(part));
     wrapper.appendChild(body);
 
     const replyBox = document.createElement("div");
@@ -122,10 +221,13 @@
     return wrapper;
   }
 
-  function renderAll() {
+  function renderAll(shouldScroll = false) {
     threadEl.innerHTML = "";
     const roots = buildTree();
     roots.forEach((root) => threadEl.appendChild(renderMessage(root)));
+    if (shouldScroll) {
+      scrollToBottom();
+    }
   }
 
   function sendMessage() {
@@ -167,6 +269,11 @@
     const actions = document.createElement("div");
     actions.className = "reply-actions";
 
+    const emoji = document.createElement("button");
+    emoji.type = "button";
+    emoji.textContent = "Emoji";
+    actions.appendChild(emoji);
+
     const send = document.createElement("button");
     send.textContent = "Send";
     send.addEventListener("click", () => {
@@ -184,15 +291,12 @@
     actions.appendChild(cancel);
 
     box.appendChild(actions);
+    attachEmojiPicker(emoji, area);
     area.focus();
     area.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
       if (event.ctrlKey || event.metaKey) {
-        const start = area.selectionStart;
-        const end = area.selectionEnd;
-        const value = area.value;
-        area.value = value.slice(0, start) + "\n" + value.slice(end);
-        area.selectionStart = area.selectionEnd = start + 1;
+        insertAtCursor(area, "\n");
         event.preventDefault();
         return;
       }
@@ -246,15 +350,13 @@
     ws.send(JSON.stringify({ type: "react", message_id: messageId, value }));
   }
 
+  attachEmojiPicker(emojiButton, inputEl);
+
   sendBtn.addEventListener("click", sendMessage);
   inputEl.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;
     if (event.ctrlKey || event.metaKey) {
-      const start = inputEl.selectionStart;
-      const end = inputEl.selectionEnd;
-      const value = inputEl.value;
-      inputEl.value = value.slice(0, start) + "\n" + value.slice(end);
-      inputEl.selectionStart = inputEl.selectionEnd = start + 1;
+      insertAtCursor(inputEl, "\n");
       event.preventDefault();
       return;
     }
@@ -265,13 +367,21 @@
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.type === "message" || data.type === "reaction" || data.type === "edit") {
+      const wasAtBottom = isAtBottom();
       messages.set(data.message.id, data.message);
-      renderAll();
+      renderAll(wasAtBottom);
+      if (wasAtBottom) {
+        saveLastSeen(latestMessageTime());
+      }
     }
   };
 
   ws.onopen = () => {
     initialMessages.forEach((msg) => messages.set(msg.id, msg));
-    renderAll();
+    renderAll(true);
+    const latest = latestMessageTime();
+    if (!lastSeenAt && latest) {
+      saveLastSeen(latest);
+    }
   };
 })();

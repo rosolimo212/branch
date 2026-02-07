@@ -1,20 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
   <div class="header">
+    <div class="left-actions">
+      <a class="link" href="/lobby">Back</a>
+      <button class="link-button" id="clear-reply">Clear reply</button>
+    </div>
     <div class="title">{{ topic.title }}</div>
-    <a class="link" href="/lobby">Back</a>
   </div>
 
   <div class="thread-controls">
     <div class="reply-indicator" id="reply-indicator">Replying to: none</div>
-    <button class="link-button" id="clear-reply">Clear reply</button>
   </div>
 
   <div id="thread" class="thread"></div>
 
   <div class="composer">
     <textarea id="message-input" placeholder="Write a message..."></textarea>
-    <button id="send-message">Send</button>
+    <div class="composer-actions">
+      <button id="emoji-button" type="button">Emoji</button>
+      <button id="send-message">Send</button>
+    </div>
   </div>
 
   <script>

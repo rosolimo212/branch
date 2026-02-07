@@ -71,6 +71,14 @@ def init_db() -> None:
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS invites (
+            token TEXT PRIMARY KEY,
+            created_at TEXT NOT NULL,
+            used_at TEXT,
+            used_by INTEGER,
+            FOREIGN KEY (used_by) REFERENCES users(id) ON DELETE SET NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_messages_topic ON messages(topic_id);
         CREATE INDEX IF NOT EXISTS idx_messages_parent ON messages(parent_id);
         """
@@ -96,6 +104,17 @@ def create_user(username: str, password: str) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def _create_user_in_tx(conn: sqlite3.Connection, username: str, password: str) -> int:
+    salt = secrets.token_bytes(16).hex()
+    pwd_hash = _hash_password(password, salt)
+    cur = conn.execute(
+        "INSERT INTO users (username, password_hash, password_salt, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        (username, pwd_hash, salt, _now()),
+    )
+    return int(cur.lastrowid)
 
 
 def user_exists(username: str) -> bool:
@@ -159,9 +178,18 @@ def delete_session(token: str) -> None:
 def list_topics() -> list[sqlite3.Row]:
     conn = _connect()
     rows = conn.execute(
-        "SELECT t.id, t.title, t.created_at, u.username as author "
-        "FROM topics t JOIN users u ON u.id = t.created_by "
-        "ORDER BY t.created_at DESC"
+        """
+        SELECT t.id,
+               t.title,
+               t.created_at,
+               u.username as author,
+               COALESCE(MAX(m.created_at), t.created_at) as last_activity_at
+        FROM topics t
+        JOIN users u ON u.id = t.created_by
+        LEFT JOIN messages m ON m.topic_id = t.id
+        GROUP BY t.id
+        ORDER BY last_activity_at DESC
+        """
     ).fetchall()
     conn.close()
     return rows
@@ -287,3 +315,61 @@ def update_message(message_id: int, user_id: int, body: str) -> Optional[sqlite3
         return None
     row = get_message(message_id)
     return row
+
+
+def create_invite() -> str:
+    token = secrets.token_urlsafe(24)
+    conn = _connect()
+    conn.execute(
+        "INSERT INTO invites (token, created_at) VALUES (?, ?)",
+        (token, _now()),
+    )
+    conn.commit()
+    conn.close()
+    return token
+
+
+def get_invite(token: str) -> Optional[sqlite3.Row]:
+    conn = _connect()
+    row = conn.execute(
+        "SELECT token, created_at, used_at FROM invites WHERE token = ?",
+        (token,),
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def create_user_with_invite(token: str, username: str, password: str) -> Optional[int]:
+    conn = _connect()
+    try:
+        conn.execute("BEGIN")
+        row = conn.execute(
+            "SELECT token, used_at FROM invites WHERE token = ?",
+            (token,),
+        ).fetchone()
+        if not row or row["used_at"] is not None:
+            conn.execute("ROLLBACK")
+            conn.close()
+            return None
+
+        exists = conn.execute(
+            "SELECT 1 FROM users WHERE username = ?",
+            (username,),
+        ).fetchone()
+        if exists:
+            conn.execute("ROLLBACK")
+            conn.close()
+            return None
+
+        user_id = _create_user_in_tx(conn, username, password)
+        conn.execute(
+            "UPDATE invites SET used_at = ?, used_by = ? WHERE token = ?",
+            (_now(), user_id, token),
+        )
+        conn.commit()
+        conn.close()
+        return user_id
+    except Exception:
+        conn.execute("ROLLBACK")
+        conn.close()
+        raise

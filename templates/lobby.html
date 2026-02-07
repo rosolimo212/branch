@@ -3,6 +3,9 @@
   <div class="header">
     <div class="title">Lobby</div>
     <div class="user">Logged in as {{ user.username }}</div>
+    {% if is_admin %}
+      <a class="link" href="/admin">Admin</a>
+    {% endif %}
     <a class="link" href="/logout">Logout</a>
   </div>
 
@@ -16,7 +19,7 @@
   <div class="topics">
     {% if topics %}
       {% for topic in topics %}
-        <a class="topic" href="/topic/{{ topic.id }}">
+        <a class="topic" href="/topic/{{ topic.id }}" data-topic-id="{{ topic.id }}" data-last-activity="{{ topic.last_activity_at }}">
           <div class="topic-title">{{ topic.title }}</div>
           <div class="topic-meta">by {{ topic.author }} · {{ topic.created_at }}</div>
         </a>
@@ -25,4 +28,6 @@
       <div class="empty">No topics yet.</div>
     {% endif %}
   </div>
+
+  <script src="/static/lobby.js"></script>
 {% endblock %}
