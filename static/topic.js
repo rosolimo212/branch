@@ -84,6 +84,11 @@
     button.addEventListener("click", () => {
       panel.dataset.open = panel.dataset.open === "true" ? "false" : "true";
     });
+    document.addEventListener("click", (event) => {
+      if (!panel.contains(event.target) && event.target !== button) {
+        panel.dataset.open = "false";
+      }
+    });
   }
 
   function renderBody(text) {
@@ -130,7 +135,7 @@
   }
 
   function isUnread(node) {
-    if (!lastSeenAt) return false;
+    if (!lastSeenAt) return true;
     if (node.username === currentUser.username) return false;
     return new Date(node.created_at) > new Date(lastSeenAt);
   }
@@ -379,9 +384,18 @@
   ws.onopen = () => {
     initialMessages.forEach((msg) => messages.set(msg.id, msg));
     renderAll(true);
+  };
+
+  window.addEventListener("scroll", () => {
+    if (isAtBottom()) {
+      saveLastSeen(latestMessageTime());
+    }
+  });
+
+  window.addEventListener("beforeunload", () => {
     const latest = latestMessageTime();
-    if (!lastSeenAt && latest) {
+    if (latest) {
       saveLastSeen(latest);
     }
-  };
+  });
 })();
