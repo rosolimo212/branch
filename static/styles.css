@@ -14,6 +14,87 @@ a {
   text-decoration: none;
 }
 
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  background: #1b2530;
+  color: #c8d0d8;
+  border: 1px solid #2d3742;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+body[data-theme="light"] {
+  background: #f2f5f8;
+  color: #1f2a33;
+}
+
+body[data-theme="light"] a {
+  color: #2a5adf;
+}
+
+body[data-theme="light"] .theme-toggle {
+  background: #e0e7ef;
+  color: #1f2a33;
+  border-color: #b7c3cf;
+}
+
+body[data-theme="light"] .error-box,
+body[data-theme="light"] .panel,
+body[data-theme="light"] .topic {
+  background: #ffffff;
+  border-color: #cdd6df;
+}
+
+body[data-theme="light"] input,
+body[data-theme="light"] textarea {
+  background: #ffffff;
+  color: #1f2a33;
+  border-color: #cdd6df;
+}
+
+body[data-theme="light"] button {
+  background: #e0e7ef;
+  color: #1f2a33;
+  border-color: #cdd6df;
+}
+
+body[data-theme="light"] .message {
+  border-left-color: #cdd6df;
+}
+
+body[data-theme="light"] .message.unread {
+  border-left-color: #6881c4;
+  background: rgba(104, 129, 196, 0.12);
+}
+
+body[data-theme="light"] .topic.unread {
+  border-color: #6881c4;
+  background: #eef2fb;
+}
+
+body[data-theme="light"] .error-lines,
+body[data-theme="light"] .user,
+body[data-theme="light"] .topic-meta,
+body[data-theme="light"] .message-meta,
+body[data-theme="light"] .form-note {
+  color: #5a6a78;
+}
+
+body[data-theme="light"] .message-author {
+  color: #1f2a33;
+}
+
+body[data-theme="light"] .emoji-panel,
+body[data-theme="light"] .emoji-item {
+  background: #ffffff;
+  border-color: #cdd6df;
+}
+
 .page {
   min-height: 100vh;
   padding: 24px;
