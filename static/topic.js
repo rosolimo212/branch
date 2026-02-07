@@ -85,22 +85,22 @@
     if (!button || !panel) return;
     fillEmojiPanel(panel, textarea);
     const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (isTouch) {
+      panel.classList.add("open");
+      return;
+    }
     const toggle = (event) => {
       event.preventDefault();
       event.stopPropagation();
       panel.classList.toggle("open");
     };
     button.addEventListener("click", toggle);
-    button.addEventListener("pointerup", toggle);
-    button.addEventListener("touchend", toggle, { passive: false });
     panel.addEventListener("click", (event) => event.stopPropagation());
-    if (!isTouch) {
-      document.addEventListener("click", (event) => {
-        if (!panel.contains(event.target) && event.target !== button) {
-          panel.classList.remove("open");
-        }
-      });
-    }
+    document.addEventListener("click", (event) => {
+      if (!panel.contains(event.target) && event.target !== button) {
+        panel.classList.remove("open");
+      }
+    });
   }
 
   function renderBody(text) {
