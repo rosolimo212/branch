@@ -1,5 +1,6 @@
 # Minimal Private Threads
 
+
 Minimal web app with a 404-style landing page and a hidden login door. After login
 you get a lobby of topics and infinitely branching text threads with realtime
 updates. No external services, no tracking, and only one session cookie.
