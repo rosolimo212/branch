@@ -6,7 +6,7 @@
   const applyTheme = (value) => {
     document.body.dataset.theme = value;
     localStorage.setItem(storageKey, value);
-    toggle.textContent = value === "light" ? "Dark" : "Light";
+    toggle.textContent = value === "light" ? "🌙" : "☀️";
   };
 
   const saved = localStorage.getItem(storageKey) || "dark";

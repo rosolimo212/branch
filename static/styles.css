@@ -14,6 +14,15 @@ a {
   text-decoration: none;
 }
 
+.link {
+  font-size: 12px;
+  display: inline-block;
+  background: #1b2530;
+  color: #c8d0d8;
+  border: 1px solid #2d3742;
+  padding: 6px 10px;
+}
+
 .theme-toggle {
   background: #1b2530;
   color: #c8d0d8;
@@ -52,6 +61,13 @@ body[data-theme="light"] a {
 }
 
 body[data-theme="light"] .theme-toggle {
+  background: #e0e7ef;
+  color: #1f2a33;
+  border-color: #b7c3cf;
+}
+
+body[data-theme="light"] .link,
+body[data-theme="light"] .link-button {
   background: #e0e7ef;
   color: #1f2a33;
   border-color: #b7c3cf;
@@ -281,10 +297,10 @@ button {
 }
 
 .link-button {
-  background: none;
-  border: none;
-  color: #9db7ff;
-  padding: 0;
+  background: #1b2530;
+  color: #c8d0d8;
+  border: 1px solid #2d3742;
+  padding: 6px 10px;
 }
 
 .thread {
