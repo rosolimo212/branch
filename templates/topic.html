@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
   <div class="header">
-    <div class="left-actions">
-      <a class="link" href="/lobby">Back</a>
-      <button class="link-button" id="clear-reply">Clear reply</button>
-    </div>
     <div class="title">{{ topic.title }}</div>
+  </div>
+  <div class="header-actions">
+    <a class="link" href="/lobby">Back</a>
+    <button class="link-button" id="clear-reply">Clear reply</button>
   </div>
 
   <div class="thread-controls">

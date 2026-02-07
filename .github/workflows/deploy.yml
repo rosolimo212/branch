@@ -1,0 +1,31 @@
+name: branch-deploy
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, branch-prod]
+    steps:
+      - name: Update code
+        run: |
+          cd /opt/branch
+          git fetch origin main
+          git checkout main
+          git pull --ff-only origin main
+      - name: Install deps
+        run: /opt/branch/.venv/bin/pip install -r /opt/branch/requirements.txt
+      - name: Restart service
+        run: sudo systemctl restart branch
+
+  check-dev:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: [self-hosted, branch-prod]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Quick syntax check
+        run: python3 -m compileall -q .
